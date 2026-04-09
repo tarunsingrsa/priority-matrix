@@ -25,132 +25,121 @@
     --q2-bg: rgba(110,231,183,0.06);
     --q3-bg: rgba(251,191,36,0.06);
     --q4-bg: rgba(148,163,184,0.04);
+    --overdue: #ff4444;
+    --due-soon: #fbbf24;
+    --due-ok: #6ee7b7;
   }
 
-  html, body {
-    height: 100%;
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Outfit', sans-serif;
-    font-weight: 300;
-    overflow: hidden;
-  }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; font-weight: 300; overflow: hidden; }
 
   body::after {
-    content: '';
-    position: fixed; inset: 0;
+    content: ''; position: fixed; inset: 0;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
     pointer-events: none; z-index: 9000; opacity: 0.6;
   }
 
-  .app {
-    position: relative;
-    z-index: 1;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    padding: 20px;
-    gap: 16px;
+  /* ── NAV TABS ── */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 52px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 20px;
+    gap: 0;
+    z-index: 100;
   }
 
-  /* HEADER */
-  header {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
+  .nav-brand {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: 22px;
+    letter-spacing: 0.04em;
+    margin-right: 28px;
     flex-shrink: 0;
   }
 
-  .wordmark {
-    font-family: 'Cormorant Garamond', serif;
-    font-weight: 300;
-    font-size: 30px;
-    letter-spacing: 0.05em;
-    line-height: 1;
-  }
+  .nav-brand em { font-style: italic; color: var(--q1); }
 
-  .wordmark em { font-style: italic; color: var(--q1); }
+  .nav-tabs { display: flex; gap: 2px; flex: 1; }
 
-  .header-meta {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 5px;
-  }
-
-  .date-str {
-    font-size: 10px;
-    color: var(--muted);
-    letter-spacing: 0.12em;
+  .nav-tab {
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
+    color: var(--muted);
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: 'Outfit', sans-serif;
+    transition: background 0.2s, color 0.2s;
   }
+
+  .nav-tab:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+  .nav-tab.active { color: var(--text); background: rgba(255,255,255,0.08); }
+
+  .nav-right {
+    display: flex; align-items: center; gap: 10px;
+    margin-left: auto;
+  }
+
+  .date-str { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
 
   .sync-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 9px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    padding: 3px 9px;
-    border-radius: 20px;
-    border: 1px solid var(--border);
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 20px; border: 1px solid var(--border);
     transition: all 0.3s;
   }
-
   .sync-pill.syncing { border-color: rgba(251,191,36,0.35); color: #fbbf24; }
   .sync-pill.synced  { border-color: rgba(110,231,183,0.35); color: #6ee7b7; }
   .sync-pill.error   { border-color: rgba(255,107,107,0.35); color: #ff6b6b; }
-
   .sync-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
   .sync-pill.syncing .sync-dot { animation: blink 1s infinite; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
 
-  /* AXIS */
+  /* ── PAGES ── */
+  .page { position: fixed; inset: 0; top: 52px; overflow: hidden; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+  .page.active { opacity: 1; pointer-events: all; }
+
+  /* ════════════════════
+     MATRIX PAGE
+  ════════════════════ */
+  .matrix-page {
+    display: flex; flex-direction: column;
+    padding: 16px 20px 20px;
+    gap: 16px; height: 100%;
+  }
+
   .axis-wrapper {
     flex: 1;
     display: grid;
     grid-template-columns: 18px 1fr;
     grid-template-rows: 1fr 18px;
-    gap: 6px;
-    min-height: 0;
+    gap: 6px; min-height: 0;
   }
 
   .y-label { grid-column: 1; grid-row: 1; display: flex; align-items: center; justify-content: center; }
   .y-label span { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
   .x-label { grid-column: 2; grid-row: 2; display: flex; align-items: center; justify-content: center; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
 
-  /* MATRIX */
   .matrix {
     grid-column: 2; grid-row: 1;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 10px;
-    height: 100%;
+    display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;
+    gap: 10px; height: 100%;
   }
 
   .quad {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    padding: 18px 18px 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    overflow: hidden;
-    position: relative;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
+    padding: 16px 16px 12px; display: flex; flex-direction: column; gap: 8px;
+    overflow: hidden; position: relative; transition: border-color 0.2s, box-shadow 0.2s;
   }
 
   .quad::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: var(--accent);
-    opacity: 0.8;
-    border-radius: 18px 18px 0 0;
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--accent); opacity: 0.8; border-radius: 18px 18px 0 0;
   }
 
   .quad[data-q="1"] { --accent: var(--q1); background: var(--q1-bg); }
@@ -158,198 +147,292 @@
   .quad[data-q="3"] { --accent: var(--q3); background: var(--q3-bg); }
   .quad[data-q="4"] { --accent: var(--q4); background: var(--q4-bg); }
 
-  .quad.drag-over {
-    border-color: var(--accent) !important;
-    box-shadow: 0 0 0 1px var(--accent), inset 0 0 40px rgba(255,255,255,0.02);
-  }
+  .quad.drag-over { border-color: var(--accent) !important; box-shadow: 0 0 0 1px var(--accent); }
 
   .drop-hint {
-    display: none;
-    position: absolute; inset: 0;
-    border-radius: 18px;
+    display: none; position: absolute; inset: 0; border-radius: 18px;
     align-items: center; justify-content: center;
     font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
-    color: var(--accent);
-    background: rgba(0,0,0,0.35);
-    backdrop-filter: blur(2px);
+    color: var(--accent); background: rgba(0,0,0,0.35); backdrop-filter: blur(2px);
     pointer-events: none; z-index: 5;
   }
-
   .quad.drag-over .drop-hint { display: flex; }
 
-  .quad-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    flex-shrink: 0;
-  }
+  .quad-header { display: flex; align-items: flex-start; justify-content: space-between; flex-shrink: 0; }
 
   .quad-title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 22px;
-    font-weight: 300;
-    color: var(--accent);
-    letter-spacing: 0.02em;
-    line-height: 1;
+    font-size: 20px; font-weight: 300; color: var(--accent);
+    letter-spacing: 0.02em; line-height: 1;
   }
 
-  .quad-sub {
-    font-size: 9px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-top: 3px;
-  }
+  .quad-sub { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 3px; }
 
   .quad-count {
-    font-size: 10px; color: var(--muted);
-    background: rgba(255,255,255,0.06);
-    min-width: 22px; height: 22px;
-    border-radius: 11px;
-    display: flex; align-items: center; justify-content: center;
-    padding: 0 6px; flex-shrink: 0;
+    font-size: 10px; color: var(--muted); background: rgba(255,255,255,0.06);
+    min-width: 22px; height: 22px; border-radius: 11px;
+    display: flex; align-items: center; justify-content: center; padding: 0 6px; flex-shrink: 0;
   }
 
-  .quad-tasks {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    overflow-y: auto;
-    scrollbar-width: none;
-    min-height: 0;
-  }
-
+  .quad-tasks { flex: 1; display: flex; flex-direction: column; gap: 5px; overflow-y: auto; scrollbar-width: none; min-height: 0; }
   .quad-tasks::-webkit-scrollbar { display: none; }
 
+  /* TASK CHIP */
   .task-chip {
-    display: flex; align-items: center; gap: 8px;
-    padding: 8px 10px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    cursor: grab;
-    user-select: none; touch-action: none;
+    display: flex; flex-direction: column; gap: 3px;
+    padding: 7px 10px;
+    background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+    border-radius: 8px; cursor: grab; user-select: none; touch-action: none;
     transition: background 0.15s, transform 0.1s, box-shadow 0.1s;
-    flex-shrink: 0;
+    flex-shrink: 0; position: relative;
   }
+
+  /* Due date color left border */
+  .task-chip.overdue { border-left: 2px solid var(--overdue); }
+  .task-chip.due-soon { border-left: 2px solid var(--due-soon); }
+  .task-chip.due-ok   { border-left: 2px solid var(--due-ok); }
 
   .task-chip:hover { background: rgba(255,255,255,0.07); border-color: var(--border-hi); }
   .task-chip:active { transform: scale(1.02); box-shadow: 0 8px 24px rgba(0,0,0,0.5); cursor: grabbing; }
 
+  .task-top { display: flex; align-items: center; gap: 7px; }
   .task-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-  .task-text { flex: 1; font-size: 12px; line-height: 1.4; color: var(--text); }
-  .task-del { font-size: 15px; color: var(--muted); cursor: pointer; opacity: 0; transition: opacity 0.15s; flex-shrink: 0; }
-  .task-chip:hover .task-del { opacity: 0.5; }
-  .task-del:hover { opacity: 1 !important; color: var(--q1); }
+  .task-text { flex: 1; font-size: 11px; line-height: 1.4; color: var(--text); }
+  .task-del { font-size: 15px; color: var(--muted); cursor: pointer; opacity: 0.5; transition: opacity 0.15s, color 0.15s; flex-shrink: 0; padding: 2px 6px; border-radius: 4px; line-height: 1; background: none; border: none; pointer-events: all; }
+
+  .task-del:hover, .task-del:active { opacity: 1; color: var(--q1); }
+
+  .task-due {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase;
+    padding-left: 13px;
+  }
+
+  .task-due.overdue { color: var(--overdue); }
+  .task-due.due-soon { color: var(--due-soon); }
+  .task-due.due-ok   { color: var(--due-ok); }
+  .task-due.no-date  { color: var(--muted); }
+
+  .task-due-dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
 
   .add-btn {
-    display: flex; align-items: center; gap: 6px;
-    background: none;
-    border: 1px dashed rgba(255,255,255,0.1);
-    border-radius: 8px;
-    padding: 7px 10px;
-    color: var(--muted);
-    font-family: 'Outfit', sans-serif;
-    font-size: 11px; font-weight: 300;
-    letter-spacing: 0.05em;
-    cursor: pointer;
+    display: flex; align-items: center; gap: 6px; background: none;
+    border: 1px dashed rgba(255,255,255,0.1); border-radius: 8px;
+    padding: 7px 10px; color: var(--muted);
+    font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 300;
+    letter-spacing: 0.05em; cursor: pointer;
     transition: border-color 0.2s, color 0.2s;
     flex-shrink: 0; width: 100%; text-align: left;
   }
-
   .add-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-  /* MODAL */
-  .modal-bg {
-    display: none;
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.72);
-    z-index: 200;
-    align-items: flex-end;
-    justify-content: center;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+  /* ════════════════════
+     CALENDAR PAGE
+  ════════════════════ */
+  .calendar-page {
+    height: 100%; display: flex; flex-direction: column;
+    padding: 20px; gap: 16px; overflow: hidden;
   }
 
+  .cal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .cal-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px; font-weight: 300; letter-spacing: 0.02em;
+  }
+
+  .cal-title em { font-style: italic; color: var(--q2); }
+
+  .cal-nav { display: flex; align-items: center; gap: 12px; }
+
+  .cal-nav-btn {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--surface2); border: 1px solid var(--border-hi);
+    color: var(--text); cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+  }
+
+  .cal-nav-btn:hover { background: rgba(255,255,255,0.1); }
+
+  .cal-month-label {
+    font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); min-width: 140px; text-align: center;
+  }
+
+  .cal-today-btn {
+    padding: 5px 12px; border-radius: 8px; border: 1px solid var(--border-hi);
+    background: none; color: var(--muted); font-family: 'Outfit', sans-serif;
+    font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+    cursor: pointer; transition: background 0.2s, color 0.2s;
+  }
+
+  .cal-today-btn:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+
+  /* Day labels */
+  .cal-days-header {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    gap: 4px; flex-shrink: 0;
+  }
+
+  .cal-day-label {
+    text-align: center; font-size: 9px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted); padding: 4px 0;
+  }
+
+  /* Grid */
+  .cal-grid {
+    flex: 1; display: grid; grid-template-columns: repeat(7, 1fr);
+    grid-auto-rows: 1fr; gap: 4px; min-height: 0;
+  }
+
+  .cal-cell {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 8px 8px 6px;
+    display: flex; flex-direction: column; gap: 3px;
+    overflow: hidden; min-height: 0;
+    transition: border-color 0.2s;
+  }
+
+  .cal-cell.other-month { opacity: 0.3; }
+
+  .cal-cell.today {
+    border-color: rgba(110,231,183,0.4);
+    background: rgba(110,231,183,0.04);
+  }
+
+  .cal-cell.has-tasks { border-color: rgba(255,255,255,0.12); }
+
+  .cal-date {
+    font-size: 11px; font-weight: 400; color: var(--muted);
+    flex-shrink: 0; line-height: 1;
+  }
+
+  .cal-cell.today .cal-date {
+    color: var(--q2);
+    font-weight: 500;
+  }
+
+  .cal-tasks { display: flex; flex-direction: column; gap: 2px; flex: 1; overflow: hidden; }
+
+  .cal-task-pill {
+    display: flex; align-items: center; gap: 4px;
+    padding: 2px 5px; border-radius: 4px;
+    font-size: 9px; line-height: 1.3;
+    background: rgba(255,255,255,0.05);
+    border-left: 2px solid var(--pill-color, #94a3b8);
+    overflow: hidden; flex-shrink: 0;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .cal-task-pill:hover { background: rgba(255,255,255,0.09); }
+
+  .cal-task-pill-text {
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    color: var(--text); flex: 1;
+  }
+
+  .cal-task-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--pill-color, #94a3b8); flex-shrink: 0; }
+
+  .cal-more {
+    font-size: 9px; color: var(--muted); letter-spacing: 0.05em;
+    padding: 1px 4px;
+  }
+
+  /* ── MODAL ── */
+  .modal-bg {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.72); z-index: 200;
+    align-items: flex-end; justify-content: center;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  }
   .modal-bg.open { display: flex; }
 
   .modal {
-    background: #1a1a1e;
-    border: 1px solid var(--border-hi);
-    border-bottom: none;
-    border-radius: 24px 24px 0 0;
-    padding: 28px 24px 40px;
-    width: 100%;
-    max-width: 520px;
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
+    background: #1a1a1e; border: 1px solid var(--border-hi); border-bottom: none;
+    border-radius: 24px 24px 0 0; padding: 28px 24px 40px;
+    width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 16px;
     animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-  .modal-handle { width: 36px; height: 4px; background: var(--border-hi); border-radius: 2px; margin: 0 auto -6px; }
+  .modal-handle { width: 36px; height: 4px; background: var(--border-hi); border-radius: 2px; margin: 0 auto -4px; }
 
   .modal-title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 26px; font-weight: 300;
-    color: var(--accent, var(--text));
+    font-size: 26px; font-weight: 300; color: var(--accent, var(--text));
   }
 
   .modal-input {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid var(--border-hi);
-    border-radius: 12px;
-    padding: 14px 16px;
-    font-family: 'Outfit', sans-serif;
-    font-size: 15px; font-weight: 300;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border-hi);
+    border-radius: 12px; padding: 13px 16px;
+    font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 300;
     color: var(--text); outline: none; width: 100%;
-    transition: border-color 0.2s;
-    letter-spacing: 0.01em;
+    transition: border-color 0.2s; letter-spacing: 0.01em;
   }
-
   .modal-input::placeholder { color: var(--muted); }
   .modal-input:focus { border-color: var(--accent, var(--border-hi)); }
+
+  /* Date picker row */
+  .modal-date-row {
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .modal-date-label {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--muted); flex-shrink: 0;
+  }
+
+  .modal-date-input {
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border-hi);
+    border-radius: 10px; padding: 9px 13px;
+    font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 300;
+    color: var(--text); outline: none; flex: 1;
+    transition: border-color 0.2s;
+    color-scheme: dark;
+  }
+
+  .modal-date-input:focus { border-color: var(--accent, var(--border-hi)); }
+
+  .modal-date-clear {
+    background: none; border: 1px solid var(--border); border-radius: 8px;
+    color: var(--muted); font-size: 11px; padding: 6px 10px; cursor: pointer;
+    font-family: 'Outfit', sans-serif; letter-spacing: 0.04em;
+    transition: border-color 0.2s, color 0.2s; flex-shrink: 0;
+  }
+  .modal-date-clear:hover { border-color: var(--q1); color: var(--q1); }
 
   .color-row { display: flex; align-items: center; gap: 10px; }
   .color-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); flex-shrink: 0; }
   .color-pick { display: flex; gap: 8px; flex-wrap: wrap; }
 
-  .swatch {
-    width: 20px; height: 20px; border-radius: 50%;
-    cursor: pointer; border: 2px solid transparent;
-    transition: transform 0.15s, border-color 0.15s;
-  }
-
+  .swatch { width: 20px; height: 20px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.15s, border-color 0.15s; }
   .swatch.on { border-color: white; transform: scale(1.25); }
 
   .modal-actions { display: flex; gap: 10px; }
 
   .btn {
-    flex: 1; padding: 14px; border-radius: 12px;
-    font-family: 'Outfit', sans-serif;
-    font-size: 13px; font-weight: 400;
-    letter-spacing: 0.06em; cursor: pointer;
-    border: none; transition: opacity 0.2s, transform 0.1s;
-    text-transform: uppercase;
+    flex: 1; padding: 13px; border-radius: 12px;
+    font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 400;
+    letter-spacing: 0.06em; cursor: pointer; border: none;
+    transition: opacity 0.2s, transform 0.1s; text-transform: uppercase;
   }
-
   .btn:active { transform: scale(0.98); }
   .btn-cancel { background: rgba(255,255,255,0.07); color: var(--muted); }
   .btn-add { background: var(--accent, #f0ede8); color: #0e0e10; }
 
-  /* LOADER */
+  /* ── LOADER ── */
   #loader {
     position: fixed; inset: 0; background: var(--bg);
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 20px; z-index: 9999; transition: opacity 0.5s;
   }
-
   #loader.out { opacity: 0; pointer-events: none; }
-
   .loader-word { font-family: 'Cormorant Garamond', serif; font-size: 34px; font-weight: 300; letter-spacing: 0.08em; }
   .loader-word em { font-style: italic; color: var(--q1); }
   .loader-bar { width: 100px; height: 1px; background: var(--border); position: relative; overflow: hidden; }
@@ -362,16 +445,20 @@
     border-radius: 8px; transform: scale(1.04);
   }
 
-  /* MOBILE */
+  /* ── MOBILE ── */
   @media (max-width: 600px) {
-    .app { padding: 14px; gap: 12px; }
-    .wordmark { font-size: 24px; }
-    .quad { padding: 12px 12px 10px; border-radius: 14px; gap: 8px; }
-    .quad::before { border-radius: 14px 14px 0 0; }
-    .quad-title { font-size: 18px; }
+    .nav-brand { font-size: 18px; margin-right: 12px; }
+    .date-str { display: none; }
+    .matrix-page { padding: 10px 12px 12px; }
+    .quad { padding: 10px 10px 8px; border-radius: 12px; }
+    .quad-title { font-size: 16px; }
     .quad-sub { display: none; }
-    .matrix { gap: 8px; }
-    .drop-hint { border-radius: 14px; }
+    .matrix { gap: 7px; }
+    .calendar-page { padding: 12px; gap: 10px; }
+    .cal-title { font-size: 22px; }
+    .cal-cell { padding: 5px 5px 4px; border-radius: 7px; }
+    .cal-date { font-size: 10px; }
+    .cal-task-pill { font-size: 8px; }
   }
 </style>
 </head>
@@ -382,77 +469,93 @@
   <div class="loader-bar"></div>
 </div>
 
-<div class="app">
-  <header>
-    <div class="wordmark"><em>Priority</em> Matrix</div>
-    <div class="header-meta">
-      <div class="date-str" id="dateStr"></div>
-      <div class="sync-pill syncing" id="syncPill">
-        <div class="sync-dot"></div>
-        <span id="syncTxt">Connecting</span>
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-brand"><em>Priority</em> Matrix</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-page="matrix">Matrix</button>
+    <button class="nav-tab" data-page="calendar">Calendar</button>
+  </div>
+  <div class="nav-right">
+    <div class="date-str" id="dateStr"></div>
+    <div class="sync-pill syncing" id="syncPill">
+      <div class="sync-dot"></div>
+      <span id="syncTxt">Connecting</span>
+    </div>
+  </div>
+</nav>
+
+<!-- MATRIX PAGE -->
+<div class="page active" id="page-matrix">
+  <div class="matrix-page">
+    <div class="axis-wrapper">
+      <div class="y-label"><span>← Importance →</span></div>
+      <div class="matrix">
+        <div class="quad" data-q="1" data-imp="high" data-urg="high">
+          <div class="drop-hint">Drop here</div>
+          <div class="quad-header">
+            <div><div class="quad-title">Do Now</div><div class="quad-sub">High importance · High urgency</div></div>
+            <div class="quad-count" id="count-1">0</div>
+          </div>
+          <div class="quad-tasks" id="tasks-1"></div>
+          <button class="add-btn" data-q="1">+ Add task</button>
+        </div>
+        <div class="quad" data-q="2" data-imp="high" data-urg="low">
+          <div class="drop-hint">Drop here</div>
+          <div class="quad-header">
+            <div><div class="quad-title">Schedule</div><div class="quad-sub">High importance · Low urgency</div></div>
+            <div class="quad-count" id="count-2">0</div>
+          </div>
+          <div class="quad-tasks" id="tasks-2"></div>
+          <button class="add-btn" data-q="2">+ Add task</button>
+        </div>
+        <div class="quad" data-q="3" data-imp="low" data-urg="high">
+          <div class="drop-hint">Drop here</div>
+          <div class="quad-header">
+            <div><div class="quad-title">Delegate</div><div class="quad-sub">Low importance · High urgency</div></div>
+            <div class="quad-count" id="count-3">0</div>
+          </div>
+          <div class="quad-tasks" id="tasks-3"></div>
+          <button class="add-btn" data-q="3">+ Add task</button>
+        </div>
+        <div class="quad" data-q="4" data-imp="low" data-urg="low">
+          <div class="drop-hint">Drop here</div>
+          <div class="quad-header">
+            <div><div class="quad-title">Eliminate</div><div class="quad-sub">Low importance · Low urgency</div></div>
+            <div class="quad-count" id="count-4">0</div>
+          </div>
+          <div class="quad-tasks" id="tasks-4"></div>
+          <button class="add-btn" data-q="4">+ Add task</button>
+        </div>
+      </div>
+      <div class="x-label">← Urgency →</div>
+      <div></div>
+    </div>
+  </div>
+</div>
+
+<!-- CALENDAR PAGE -->
+<div class="page" id="page-calendar">
+  <div class="calendar-page">
+    <div class="cal-header">
+      <div class="cal-title"><em>Calendar</em> View</div>
+      <div class="cal-nav">
+        <button class="cal-today-btn" id="calToday">Today</button>
+        <button class="cal-nav-btn" id="calPrev">‹</button>
+        <div class="cal-month-label" id="calMonthLabel"></div>
+        <button class="cal-nav-btn" id="calNext">›</button>
       </div>
     </div>
-  </header>
-
-  <div class="axis-wrapper">
-    <div class="y-label"><span>← Importance →</span></div>
-
-    <div class="matrix">
-      <div class="quad" data-q="1" data-imp="high" data-urg="high">
-        <div class="drop-hint">Drop here</div>
-        <div class="quad-header">
-          <div>
-            <div class="quad-title">Do Now</div>
-            <div class="quad-sub">High importance · High urgency</div>
-          </div>
-          <div class="quad-count" id="count-1">0</div>
-        </div>
-        <div class="quad-tasks" id="tasks-1"></div>
-        <button class="add-btn" data-q="1">+ Add task</button>
-      </div>
-
-      <div class="quad" data-q="2" data-imp="high" data-urg="low">
-        <div class="drop-hint">Drop here</div>
-        <div class="quad-header">
-          <div>
-            <div class="quad-title">Schedule</div>
-            <div class="quad-sub">High importance · Low urgency</div>
-          </div>
-          <div class="quad-count" id="count-2">0</div>
-        </div>
-        <div class="quad-tasks" id="tasks-2"></div>
-        <button class="add-btn" data-q="2">+ Add task</button>
-      </div>
-
-      <div class="quad" data-q="3" data-imp="low" data-urg="high">
-        <div class="drop-hint">Drop here</div>
-        <div class="quad-header">
-          <div>
-            <div class="quad-title">Delegate</div>
-            <div class="quad-sub">Low importance · High urgency</div>
-          </div>
-          <div class="quad-count" id="count-3">0</div>
-        </div>
-        <div class="quad-tasks" id="tasks-3"></div>
-        <button class="add-btn" data-q="3">+ Add task</button>
-      </div>
-
-      <div class="quad" data-q="4" data-imp="low" data-urg="low">
-        <div class="drop-hint">Drop here</div>
-        <div class="quad-header">
-          <div>
-            <div class="quad-title">Eliminate</div>
-            <div class="quad-sub">Low importance · Low urgency</div>
-          </div>
-          <div class="quad-count" id="count-4">0</div>
-        </div>
-        <div class="quad-tasks" id="tasks-4"></div>
-        <button class="add-btn" data-q="4">+ Add task</button>
-      </div>
+    <div class="cal-days-header">
+      <div class="cal-day-label">Sun</div>
+      <div class="cal-day-label">Mon</div>
+      <div class="cal-day-label">Tue</div>
+      <div class="cal-day-label">Wed</div>
+      <div class="cal-day-label">Thu</div>
+      <div class="cal-day-label">Fri</div>
+      <div class="cal-day-label">Sat</div>
     </div>
-
-    <div class="x-label">← Urgency →</div>
-    <div></div>
+    <div class="cal-grid" id="calGrid"></div>
   </div>
 </div>
 
@@ -462,6 +565,11 @@
     <div class="modal-handle"></div>
     <div class="modal-title" id="modalTitle">Add Task</div>
     <input class="modal-input" id="taskInput" type="text" placeholder="What needs to get done?" maxlength="80" autocomplete="off">
+    <div class="modal-date-row">
+      <span class="modal-date-label">Due</span>
+      <input class="modal-date-input" id="dueDateInput" type="date">
+      <button class="modal-date-clear" id="clearDateBtn">Clear</button>
+    </div>
     <div class="color-row">
       <span class="color-label">Tag</span>
       <div class="color-pick" id="colorPick"></div>
@@ -496,9 +604,9 @@
   };
 
   function getQ(imp, urg) {
-    if (imp==='high' && urg==='high') return '1';
-    if (imp==='high' && urg==='low')  return '2';
-    if (imp==='low'  && urg==='high') return '3';
+    if (imp==='high'&&urg==='high') return '1';
+    if (imp==='high'&&urg==='low')  return '2';
+    if (imp==='low' &&urg==='high') return '3';
     return '4';
   }
 
@@ -506,10 +614,16 @@
   let selColor = COLORS[0];
   let pendingQ = null;
   let dragDocId = null, touchOrigin = null, touchClone = null;
+  let allTasks = {}; // docId -> data
+  let calYear, calMonth;
+
+  const today = new Date();
+  calYear = today.getFullYear();
+  calMonth = today.getMonth();
 
   // Date
   document.getElementById('dateStr').textContent =
-    new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+    today.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
 
   // Sync
   function setSync(s, t) {
@@ -517,7 +631,18 @@
     document.getElementById('syncTxt').textContent = t;
   }
 
-  // Swatches
+  // ── TABS ─────────────────────────────────────────────────
+  document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('page-' + tab.dataset.page).classList.add('active');
+      if (tab.dataset.page === 'calendar') renderCalendar();
+    });
+  });
+
+  // ── COLOR SWATCHES ────────────────────────────────────────
   const cp = document.getElementById('colorPick');
   COLORS.forEach(c => {
     const s = document.createElement('div');
@@ -531,7 +656,7 @@
     cp.appendChild(s);
   });
 
-  // Add buttons
+  // ── ADD BUTTONS ───────────────────────────────────────────
   document.querySelectorAll('.add-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       pendingQ = btn.dataset.q;
@@ -540,14 +665,19 @@
       document.getElementById('modalTitle').textContent = cfg.label;
       document.getElementById('addBtn').style.background = cfg.color;
       document.getElementById('taskInput').value = '';
+      document.getElementById('dueDateInput').value = '';
       document.getElementById('modalBg').classList.add('open');
       setTimeout(() => document.getElementById('taskInput').focus(), 150);
     });
   });
 
-  // Modal
+  document.getElementById('clearDateBtn').addEventListener('click', () => {
+    document.getElementById('dueDateInput').value = '';
+  });
+
+  // ── MODAL ─────────────────────────────────────────────────
   document.getElementById('cancelBtn').addEventListener('click', closeModal);
-  document.getElementById('modalBg').addEventListener('click', e => { if (e.target.id === 'modalBg') closeModal(); });
+  document.getElementById('modalBg').addEventListener('click', e => { if (e.target.id==='modalBg') closeModal(); });
   document.getElementById('taskInput').addEventListener('keydown', e => { if (e.key==='Enter') save(); if (e.key==='Escape') closeModal(); });
   document.getElementById('addBtn').addEventListener('click', save);
 
@@ -557,15 +687,41 @@
     const text = document.getElementById('taskInput').value.trim();
     if (!text || !pendingQ) return;
     const cfg = QUADS[pendingQ];
+    const dueDate = document.getElementById('dueDateInput').value || null;
     closeModal();
     setSync('syncing', 'Saving');
     try {
-      await col.add({ text, color: selColor, imp: cfg.imp, urg: cfg.urg, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+      await col.add({
+        text, color: selColor, imp: cfg.imp, urg: cfg.urg,
+        dueDate, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
       setSync('synced', 'Synced');
     } catch(e) { console.error(e); setSync('error', 'Error'); }
   }
 
-  // Render
+  // ── DUE DATE HELPERS ──────────────────────────────────────
+  function getDueStatus(dueDate) {
+    if (!dueDate) return 'no-date';
+    const due = new Date(dueDate + 'T00:00:00');
+    const now = new Date(); now.setHours(0,0,0,0);
+    const diff = Math.floor((due - now) / 86400000);
+    if (diff < 0)  return 'overdue';
+    if (diff <= 2) return 'due-soon';
+    return 'due-ok';
+  }
+
+  function formatDueLabel(dueDate, status) {
+    if (!dueDate) return null;
+    const due = new Date(dueDate + 'T00:00:00');
+    const now = new Date(); now.setHours(0,0,0,0);
+    const diff = Math.floor((due - now) / 86400000);
+    if (diff < 0)  return `${Math.abs(diff)}d overdue`;
+    if (diff === 0) return 'Due today';
+    if (diff === 1) return 'Due tomorrow';
+    return due.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  }
+
+  // ── RENDER CHIP ───────────────────────────────────────────
   function updateCounts() {
     for (let q=1; q<=4; q++) {
       document.getElementById('count-'+q).textContent =
@@ -574,47 +730,69 @@
   }
 
   function renderChip(docId, data) {
-    if (document.querySelector(`[data-doc="${docId}"]`)) return;
+    if (document.querySelector(`.task-chip[data-doc="${docId}"]`)) return;
     const q = getQ(data.imp, data.urg);
     const container = document.getElementById('tasks-'+q);
     if (!container) return;
 
+    const status = getDueStatus(data.dueDate);
+    const dueLabel = formatDueLabel(data.dueDate, status);
+
     const chip = document.createElement('div');
-    chip.className = 'task-chip';
+    chip.className = 'task-chip' + (data.dueDate ? ' ' + status : '');
     chip.draggable = true;
     chip.dataset.doc = docId;
     chip.dataset.imp = data.imp;
     chip.dataset.urg = data.urg;
-    chip.innerHTML = `<div class="task-dot" style="background:${data.color}"></div><span class="task-text">${esc(data.text)}</span><span class="task-del">×</span>`;
 
-    chip.querySelector('.task-del').addEventListener('click', async e => {
-      e.stopPropagation();
+    chip.innerHTML = `
+      <div class="task-top">
+        <div class="task-dot" style="background:${data.color}"></div>
+        <span class="task-text">${esc(data.text)}</span>
+        <button class="task-del" title="Delete task">×</button>
+      </div>
+      ${dueLabel ? `<div class="task-due ${status}"><div class="task-due-dot"></div>${dueLabel}</div>` : ''}
+    `;
+
+    const delBtn = chip.querySelector('.task-del');
+    delBtn.addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); });
+    delBtn.addEventListener('click', async e => {
+      e.stopPropagation(); e.preventDefault();
+      chip.style.opacity = '0.4';
       setSync('syncing', 'Saving');
       try { await col.doc(docId).delete(); setSync('synced', 'Synced'); }
-      catch(err) { setSync('error', 'Error'); }
+      catch(err) { chip.style.opacity = '1'; setSync('error', 'Error'); }
     });
 
-    chip.addEventListener('dragstart', () => dragDocId = docId);
+    chip.addEventListener('dragstart', e => {
+      if (e.target.classList.contains('task-del')) { e.preventDefault(); return; }
+      dragDocId = docId;
+    });
     chip.addEventListener('touchstart', onTouchStart, { passive: false });
     container.appendChild(chip);
     updateCounts();
   }
 
-  // Live listener
+  // ── FIRESTORE ─────────────────────────────────────────────
   col.orderBy('createdAt').onSnapshot(snap => {
     const loader = document.getElementById('loader');
     if (loader) { loader.classList.add('out'); setTimeout(() => loader.remove(), 600); }
     setSync('synced', 'Synced');
+    allTasks = {};
     document.querySelectorAll('.task-chip').forEach(c => c.remove());
-    snap.forEach(d => renderChip(d.id, d.data()));
+    snap.forEach(d => {
+      allTasks[d.id] = d.data();
+      renderChip(d.id, d.data());
+    });
     updateCounts();
+    renderCalendar();
   }, err => {
     console.error(err); setSync('error', 'DB Error');
     const loader = document.getElementById('loader');
     if (loader) loader.classList.add('out');
   });
 
-  // Drag & drop
+  // ── DRAG & DROP ───────────────────────────────────────────
   document.querySelectorAll('.quad').forEach(quad => {
     quad.addEventListener('dragover', e => { e.preventDefault(); quad.classList.add('drag-over'); });
     quad.addEventListener('dragleave', e => { if (!quad.contains(e.relatedTarget)) quad.classList.remove('drag-over'); });
@@ -661,21 +839,114 @@
     const el = document.elementFromPoint(t.clientX, t.clientY);
     if (el && touchOrigin) {
       const quad = el.closest('.quad');
-      if (quad) {
-        const newImp = quad.dataset.imp, newUrg = quad.dataset.urg;
-        if (touchOrigin.dataset.imp !== newImp || touchOrigin.dataset.urg !== newUrg) {
-          setSync('syncing', 'Saving');
-          try {
-            await col.doc(touchOrigin.dataset.doc).update({ imp: newImp, urg: newUrg });
-            setSync('synced', 'Synced');
-          } catch(err) { setSync('error', 'Error'); }
-        }
+      if (quad && (touchOrigin.dataset.imp !== quad.dataset.imp || touchOrigin.dataset.urg !== quad.dataset.urg)) {
+        setSync('syncing', 'Saving');
+        try {
+          await col.doc(touchOrigin.dataset.doc).update({ imp: quad.dataset.imp, urg: quad.dataset.urg });
+          setSync('synced', 'Synced');
+        } catch(err) { setSync('error', 'Error'); }
       }
     }
     document.removeEventListener('touchmove', onTouchMove);
     document.removeEventListener('touchend', onTouchEnd);
     touchOrigin = null;
   }
+
+  // ── CALENDAR ─────────────────────────────────────────────
+  const QUAD_COLORS = { '1':'#ff6b6b', '2':'#6ee7b7', '3':'#fbbf24', '4':'#94a3b8' };
+
+  function renderCalendar() {
+    const grid = document.getElementById('calGrid');
+    grid.innerHTML = '';
+
+    const label = new Date(calYear, calMonth).toLocaleDateString('en-US', { month:'long', year:'numeric' });
+    document.getElementById('calMonthLabel').textContent = label;
+
+    const firstDay = new Date(calYear, calMonth, 1).getDay();
+    const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+    const daysInPrev = new Date(calYear, calMonth, 0).getDate();
+
+    const todayStr = today.toISOString().split('T')[0];
+
+    // Build task map: date string -> [tasks]
+    const taskMap = {};
+    Object.values(allTasks).forEach(t => {
+      if (t.dueDate) {
+        if (!taskMap[t.dueDate]) taskMap[t.dueDate] = [];
+        taskMap[t.dueDate].push(t);
+      }
+    });
+
+    // Total cells = 6 rows * 7 cols = 42
+    for (let i = 0; i < 42; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'cal-cell';
+
+      let dayNum, dateStr, isCurrentMonth = true;
+
+      if (i < firstDay) {
+        dayNum = daysInPrev - firstDay + i + 1;
+        const m = String(calMonth).padStart(2,'0');
+        const y = calMonth === 0 ? calYear - 1 : calYear;
+        const mo = calMonth === 0 ? 12 : calMonth;
+        dateStr = `${y}-${String(mo).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
+        isCurrentMonth = false;
+        cell.classList.add('other-month');
+      } else if (i >= firstDay + daysInMonth) {
+        dayNum = i - firstDay - daysInMonth + 1;
+        const mo = calMonth === 11 ? 1 : calMonth + 2;
+        const y  = calMonth === 11 ? calYear + 1 : calYear;
+        dateStr = `${y}-${String(mo).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
+        isCurrentMonth = false;
+        cell.classList.add('other-month');
+      } else {
+        dayNum = i - firstDay + 1;
+        dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
+      }
+
+      if (dateStr === todayStr) cell.classList.add('today');
+
+      const tasks = taskMap[dateStr] || [];
+      if (tasks.length > 0) cell.classList.add('has-tasks');
+
+      cell.innerHTML = `<div class="cal-date">${dayNum}</div><div class="cal-tasks"></div>`;
+      const tasksEl = cell.querySelector('.cal-tasks');
+
+      const maxShow = 3;
+      tasks.slice(0, maxShow).forEach(t => {
+        const q = getQ(t.imp, t.urg);
+        const pill = document.createElement('div');
+        pill.className = 'cal-task-pill';
+        pill.style.setProperty('--pill-color', t.color || QUAD_COLORS[q]);
+        pill.innerHTML = `<div class="cal-task-dot"></div><span class="cal-task-pill-text">${esc(t.text)}</span>`;
+        tasksEl.appendChild(pill);
+      });
+
+      if (tasks.length > maxShow) {
+        const more = document.createElement('div');
+        more.className = 'cal-more';
+        more.textContent = `+${tasks.length - maxShow} more`;
+        tasksEl.appendChild(more);
+      }
+
+      grid.appendChild(cell);
+    }
+  }
+
+  document.getElementById('calPrev').addEventListener('click', () => {
+    calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; }
+    renderCalendar();
+  });
+
+  document.getElementById('calNext').addEventListener('click', () => {
+    calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; }
+    renderCalendar();
+  });
+
+  document.getElementById('calToday').addEventListener('click', () => {
+    calYear = today.getFullYear(); calMonth = today.getMonth();
+    renderCalendar();
+  });
 
   function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 </script>
