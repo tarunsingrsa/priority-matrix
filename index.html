@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Priority Matrix</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e0e10;
+    --surface: #161618;
+    --surface2: #1c1c1f;
+    --border: rgba(255,255,255,0.07);
+    --border-hi: rgba(255,255,255,0.14);
+    --text: #f0ede8;
+    --muted: rgba(240,237,232,0.38);
+    --q1: #ff6b6b;
+    --q2: #6ee7b7;
+    --q3: #fbbf24;
+    --q4: #94a3b8;
+    --q1-bg: rgba(255,107,107,0.06);
+    --q2-bg: rgba(110,231,183,0.06);
+    --q3-bg: rgba(251,191,36,0.06);
+    --q4-bg: rgba(148,163,184,0.04);
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 300;
+    overflow: hidden;
+  }
+
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 9000; opacity: 0.6;
+  }
+
+  .app {
+    position: relative;
+    z-index: 1;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    gap: 16px;
+  }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .wordmark {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: 30px;
+    letter-spacing: 0.05em;
+    line-height: 1;
+  }
+
+  .wordmark em { font-style: italic; color: var(--q1); }
+
+  .header-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+  }
+
+  .date-str {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .sync-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    transition: all 0.3s;
+  }
+
+  .sync-pill.syncing { border-color: rgba(251,191,36,0.35); color: #fbbf24; }
+  .sync-pill.synced  { border-color: rgba(110,231,183,0.35); color: #6ee7b7; }
+  .sync-pill.error   { border-color: rgba(255,107,107,0.35); color: #ff6b6b; }
+
+  .sync-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+  .sync-pill.syncing .sync-dot { animation: blink 1s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  /* AXIS */
+  .axis-wrapper {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 18px 1fr;
+    grid-template-rows: 1fr 18px;
+    gap: 6px;
+    min-height: 0;
+  }
+
+  .y-label { grid-column: 1; grid-row: 1; display: flex; align-items: center; justify-content: center; }
+  .y-label span { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
+  .x-label { grid-column: 2; grid-row: 2; display: flex; align-items: center; justify-content: center; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
+
+  /* MATRIX */
+  .matrix {
+    grid-column: 2; grid-row: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 10px;
+    height: 100%;
+  }
+
+  .quad {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 18px 18px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: hidden;
+    position: relative;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .quad::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    opacity: 0.8;
+    border-radius: 18px 18px 0 0;
+  }
+
+  .quad[data-q="1"] { --accent: var(--q1); background: var(--q1-bg); }
+  .quad[data-q="2"] { --accent: var(--q2); background: var(--q2-bg); }
+  .quad[data-q="3"] { --accent: var(--q3); background: var(--q3-bg); }
+  .quad[data-q="4"] { --accent: var(--q4); background: var(--q4-bg); }
+
+  .quad.drag-over {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 1px var(--accent), inset 0 0 40px rgba(255,255,255,0.02);
+  }
+
+  .drop-hint {
+    display: none;
+    position: absolute; inset: 0;
+    border-radius: 18px;
+    align-items: center; justify-content: center;
+    font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(0,0,0,0.35);
+    backdrop-filter: blur(2px);
+    pointer-events: none; z-index: 5;
+  }
+
+  .quad.drag-over .drop-hint { display: flex; }
+
+  .quad-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .quad-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 300;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+    line-height: 1;
+  }
+
+  .quad-sub {
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+
+  .quad-count {
+    font-size: 10px; color: var(--muted);
+    background: rgba(255,255,255,0.06);
+    min-width: 22px; height: 22px;
+    border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 6px; flex-shrink: 0;
+  }
+
+  .quad-tasks {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    overflow-y: auto;
+    scrollbar-width: none;
+    min-height: 0;
+  }
+
+  .quad-tasks::-webkit-scrollbar { display: none; }
+
+  .task-chip {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: grab;
+    user-select: none; touch-action: none;
+    transition: background 0.15s, transform 0.1s, box-shadow 0.1s;
+    flex-shrink: 0;
+  }
+
+  .task-chip:hover { background: rgba(255,255,255,0.07); border-color: var(--border-hi); }
+  .task-chip:active { transform: scale(1.02); box-shadow: 0 8px 24px rgba(0,0,0,0.5); cursor: grabbing; }
+
+  .task-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .task-text { flex: 1; font-size: 12px; line-height: 1.4; color: var(--text); }
+  .task-del { font-size: 15px; color: var(--muted); cursor: pointer; opacity: 0; transition: opacity 0.15s; flex-shrink: 0; }
+  .task-chip:hover .task-del { opacity: 0.5; }
+  .task-del:hover { opacity: 1 !important; color: var(--q1); }
+
+  .add-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: none;
+    border: 1px dashed rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 7px 10px;
+    color: var(--muted);
+    font-family: 'Outfit', sans-serif;
+    font-size: 11px; font-weight: 300;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+    flex-shrink: 0; width: 100%; text-align: left;
+  }
+
+  .add-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* MODAL */
+  .modal-bg {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.72);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .modal-bg.open { display: flex; }
+
+  .modal {
+    background: #1a1a1e;
+    border: 1px solid var(--border-hi);
+    border-bottom: none;
+    border-radius: 24px 24px 0 0;
+    padding: 28px 24px 40px;
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+  .modal-handle { width: 36px; height: 4px; background: var(--border-hi); border-radius: 2px; margin: 0 auto -6px; }
+
+  .modal-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px; font-weight: 300;
+    color: var(--accent, var(--text));
+  }
+
+  .modal-input {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-hi);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 15px; font-weight: 300;
+    color: var(--text); outline: none; width: 100%;
+    transition: border-color 0.2s;
+    letter-spacing: 0.01em;
+  }
+
+  .modal-input::placeholder { color: var(--muted); }
+  .modal-input:focus { border-color: var(--accent, var(--border-hi)); }
+
+  .color-row { display: flex; align-items: center; gap: 10px; }
+  .color-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); flex-shrink: 0; }
+  .color-pick { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .swatch {
+    width: 20px; height: 20px; border-radius: 50%;
+    cursor: pointer; border: 2px solid transparent;
+    transition: transform 0.15s, border-color 0.15s;
+  }
+
+  .swatch.on { border-color: white; transform: scale(1.25); }
+
+  .modal-actions { display: flex; gap: 10px; }
+
+  .btn {
+    flex: 1; padding: 14px; border-radius: 12px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px; font-weight: 400;
+    letter-spacing: 0.06em; cursor: pointer;
+    border: none; transition: opacity 0.2s, transform 0.1s;
+    text-transform: uppercase;
+  }
+
+  .btn:active { transform: scale(0.98); }
+  .btn-cancel { background: rgba(255,255,255,0.07); color: var(--muted); }
+  .btn-add { background: var(--accent, #f0ede8); color: #0e0e10; }
+
+  /* LOADER */
+  #loader {
+    position: fixed; inset: 0; background: var(--bg);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 20px; z-index: 9999; transition: opacity 0.5s;
+  }
+
+  #loader.out { opacity: 0; pointer-events: none; }
+
+  .loader-word { font-family: 'Cormorant Garamond', serif; font-size: 34px; font-weight: 300; letter-spacing: 0.08em; }
+  .loader-word em { font-style: italic; color: var(--q1); }
+  .loader-bar { width: 100px; height: 1px; background: var(--border); position: relative; overflow: hidden; }
+  .loader-bar::after { content: ''; position: absolute; top: 0; left: -40%; width: 40%; height: 100%; background: var(--q2); animation: sweep 1.3s ease-in-out infinite; }
+  @keyframes sweep { 0%{left:-40%} 100%{left:100%} }
+
+  .touch-clone {
+    position: fixed; pointer-events: none; z-index: 9998;
+    opacity: 0.92; box-shadow: 0 16px 48px rgba(0,0,0,0.7);
+    border-radius: 8px; transform: scale(1.04);
+  }
+
+  /* MOBILE */
+  @media (max-width: 600px) {
+    .app { padding: 14px; gap: 12px; }
+    .wordmark { font-size: 24px; }
+    .quad { padding: 12px 12px 10px; border-radius: 14px; gap: 8px; }
+    .quad::before { border-radius: 14px 14px 0 0; }
+    .quad-title { font-size: 18px; }
+    .quad-sub { display: none; }
+    .matrix { gap: 8px; }
+    .drop-hint { border-radius: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-word"><em>Priority</em> Matrix</div>
+  <div class="loader-bar"></div>
+</div>
+
+<div class="app">
+  <header>
+    <div class="wordmark"><em>Priority</em> Matrix</div>
+    <div class="header-meta">
+      <div class="date-str" id="dateStr"></div>
+      <div class="sync-pill syncing" id="syncPill">
+        <div class="sync-dot"></div>
+        <span id="syncTxt">Connecting</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="axis-wrapper">
+    <div class="y-label"><span>← Importance →</span></div>
+
+    <div class="matrix">
+      <div class="quad" data-q="1" data-imp="high" data-urg="high">
+        <div class="drop-hint">Drop here</div>
+        <div class="quad-header">
+          <div>
+            <div class="quad-title">Do Now</div>
+            <div class="quad-sub">High importance · High urgency</div>
+          </div>
+          <div class="quad-count" id="count-1">0</div>
+        </div>
+        <div class="quad-tasks" id="tasks-1"></div>
+        <button class="add-btn" data-q="1">+ Add task</button>
+      </div>
+
+      <div class="quad" data-q="2" data-imp="high" data-urg="low">
+        <div class="drop-hint">Drop here</div>
+        <div class="quad-header">
+          <div>
+            <div class="quad-title">Schedule</div>
+            <div class="quad-sub">High importance · Low urgency</div>
+          </div>
+          <div class="quad-count" id="count-2">0</div>
+        </div>
+        <div class="quad-tasks" id="tasks-2"></div>
+        <button class="add-btn" data-q="2">+ Add task</button>
+      </div>
+
+      <div class="quad" data-q="3" data-imp="low" data-urg="high">
+        <div class="drop-hint">Drop here</div>
+        <div class="quad-header">
+          <div>
+            <div class="quad-title">Delegate</div>
+            <div class="quad-sub">Low importance · High urgency</div>
+          </div>
+          <div class="quad-count" id="count-3">0</div>
+        </div>
+        <div class="quad-tasks" id="tasks-3"></div>
+        <button class="add-btn" data-q="3">+ Add task</button>
+      </div>
+
+      <div class="quad" data-q="4" data-imp="low" data-urg="low">
+        <div class="drop-hint">Drop here</div>
+        <div class="quad-header">
+          <div>
+            <div class="quad-title">Eliminate</div>
+            <div class="quad-sub">Low importance · Low urgency</div>
+          </div>
+          <div class="quad-count" id="count-4">0</div>
+        </div>
+        <div class="quad-tasks" id="tasks-4"></div>
+        <button class="add-btn" data-q="4">+ Add task</button>
+      </div>
+    </div>
+
+    <div class="x-label">← Urgency →</div>
+    <div></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal" id="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modalTitle">Add Task</div>
+    <input class="modal-input" id="taskInput" type="text" placeholder="What needs to get done?" maxlength="80" autocomplete="off">
+    <div class="color-row">
+      <span class="color-label">Tag</span>
+      <div class="color-pick" id="colorPick"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" id="cancelBtn">Cancel</button>
+      <button class="btn btn-add" id="addBtn">Add</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+  firebase.initializeApp({
+    apiKey: "AIzaSyDEwgK0qizQUfqHNiPTyCfBBL5DAc0-AeU",
+    authDomain: "priority-matrix-9b275.firebaseapp.com",
+    projectId: "priority-matrix-9b275",
+    storageBucket: "priority-matrix-9b275.firebasestorage.app",
+    messagingSenderId: "150708057684",
+    appId: "1:150708057684:web:4367c65f36f6b758d29fc1"
+  });
+
+  const db = firebase.firestore();
+  const col = db.collection('tasks');
+
+  const QUADS = {
+    '1': { imp:'high', urg:'high', label:'Do Now',    color:'#ff6b6b' },
+    '2': { imp:'high', urg:'low',  label:'Schedule',  color:'#6ee7b7' },
+    '3': { imp:'low',  urg:'high', label:'Delegate',  color:'#fbbf24' },
+    '4': { imp:'low',  urg:'low',  label:'Eliminate', color:'#94a3b8' },
+  };
+
+  function getQ(imp, urg) {
+    if (imp==='high' && urg==='high') return '1';
+    if (imp==='high' && urg==='low')  return '2';
+    if (imp==='low'  && urg==='high') return '3';
+    return '4';
+  }
+
+  const COLORS = ['#ff6b6b','#fbbf24','#6ee7b7','#60a5fa','#c084fc','#f472b6','#a78bfa','#f0ede8'];
+  let selColor = COLORS[0];
+  let pendingQ = null;
+  let dragDocId = null, touchOrigin = null, touchClone = null;
+
+  // Date
+  document.getElementById('dateStr').textContent =
+    new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+
+  // Sync
+  function setSync(s, t) {
+    document.getElementById('syncPill').className = 'sync-pill ' + s;
+    document.getElementById('syncTxt').textContent = t;
+  }
+
+  // Swatches
+  const cp = document.getElementById('colorPick');
+  COLORS.forEach(c => {
+    const s = document.createElement('div');
+    s.className = 'swatch' + (c === selColor ? ' on' : '');
+    s.style.background = c;
+    s.addEventListener('click', () => {
+      cp.querySelectorAll('.swatch').forEach(x => x.classList.remove('on'));
+      s.classList.add('on');
+      selColor = c;
+    });
+    cp.appendChild(s);
+  });
+
+  // Add buttons
+  document.querySelectorAll('.add-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      pendingQ = btn.dataset.q;
+      const cfg = QUADS[pendingQ];
+      document.getElementById('modal').style.setProperty('--accent', cfg.color);
+      document.getElementById('modalTitle').textContent = cfg.label;
+      document.getElementById('addBtn').style.background = cfg.color;
+      document.getElementById('taskInput').value = '';
+      document.getElementById('modalBg').classList.add('open');
+      setTimeout(() => document.getElementById('taskInput').focus(), 150);
+    });
+  });
+
+  // Modal
+  document.getElementById('cancelBtn').addEventListener('click', closeModal);
+  document.getElementById('modalBg').addEventListener('click', e => { if (e.target.id === 'modalBg') closeModal(); });
+  document.getElementById('taskInput').addEventListener('keydown', e => { if (e.key==='Enter') save(); if (e.key==='Escape') closeModal(); });
+  document.getElementById('addBtn').addEventListener('click', save);
+
+  function closeModal() { document.getElementById('modalBg').classList.remove('open'); }
+
+  async function save() {
+    const text = document.getElementById('taskInput').value.trim();
+    if (!text || !pendingQ) return;
+    const cfg = QUADS[pendingQ];
+    closeModal();
+    setSync('syncing', 'Saving');
+    try {
+      await col.add({ text, color: selColor, imp: cfg.imp, urg: cfg.urg, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+      setSync('synced', 'Synced');
+    } catch(e) { console.error(e); setSync('error', 'Error'); }
+  }
+
+  // Render
+  function updateCounts() {
+    for (let q=1; q<=4; q++) {
+      document.getElementById('count-'+q).textContent =
+        document.getElementById('tasks-'+q).querySelectorAll('.task-chip').length;
+    }
+  }
+
+  function renderChip(docId, data) {
+    if (document.querySelector(`[data-doc="${docId}"]`)) return;
+    const q = getQ(data.imp, data.urg);
+    const container = document.getElementById('tasks-'+q);
+    if (!container) return;
+
+    const chip = document.createElement('div');
+    chip.className = 'task-chip';
+    chip.draggable = true;
+    chip.dataset.doc = docId;
+    chip.dataset.imp = data.imp;
+    chip.dataset.urg = data.urg;
+    chip.innerHTML = `<div class="task-dot" style="background:${data.color}"></div><span class="task-text">${esc(data.text)}</span><span class="task-del">×</span>`;
+
+    chip.querySelector('.task-del').addEventListener('click', async e => {
+      e.stopPropagation();
+      setSync('syncing', 'Saving');
+      try { await col.doc(docId).delete(); setSync('synced', 'Synced'); }
+      catch(err) { setSync('error', 'Error'); }
+    });
+
+    chip.addEventListener('dragstart', () => dragDocId = docId);
+    chip.addEventListener('touchstart', onTouchStart, { passive: false });
+    container.appendChild(chip);
+    updateCounts();
+  }
+
+  // Live listener
+  col.orderBy('createdAt').onSnapshot(snap => {
+    const loader = document.getElementById('loader');
+    if (loader) { loader.classList.add('out'); setTimeout(() => loader.remove(), 600); }
+    setSync('synced', 'Synced');
+    document.querySelectorAll('.task-chip').forEach(c => c.remove());
+    snap.forEach(d => renderChip(d.id, d.data()));
+    updateCounts();
+  }, err => {
+    console.error(err); setSync('error', 'DB Error');
+    const loader = document.getElementById('loader');
+    if (loader) loader.classList.add('out');
+  });
+
+  // Drag & drop
+  document.querySelectorAll('.quad').forEach(quad => {
+    quad.addEventListener('dragover', e => { e.preventDefault(); quad.classList.add('drag-over'); });
+    quad.addEventListener('dragleave', e => { if (!quad.contains(e.relatedTarget)) quad.classList.remove('drag-over'); });
+    quad.addEventListener('drop', async e => {
+      e.preventDefault(); quad.classList.remove('drag-over');
+      if (!dragDocId) return;
+      setSync('syncing', 'Saving');
+      try {
+        await col.doc(dragDocId).update({ imp: quad.dataset.imp, urg: quad.dataset.urg });
+        setSync('synced', 'Synced');
+      } catch(err) { setSync('error', 'Error'); }
+      dragDocId = null;
+    });
+  });
+
+  // Touch drag
+  function onTouchStart(e) {
+    touchOrigin = e.currentTarget;
+    const r = touchOrigin.getBoundingClientRect();
+    touchClone = touchOrigin.cloneNode(true);
+    touchClone.className = 'task-chip touch-clone';
+    touchClone.style.width = r.width + 'px';
+    touchClone.style.left  = r.left + 'px';
+    touchClone.style.top   = r.top + 'px';
+    document.body.appendChild(touchClone);
+    document.addEventListener('touchmove', onTouchMove, { passive: false });
+    document.addEventListener('touchend', onTouchEnd);
+  }
+
+  function onTouchMove(e) {
+    e.preventDefault();
+    const t = e.touches[0];
+    touchClone.style.left = (t.clientX - 80) + 'px';
+    touchClone.style.top  = (t.clientY - 22) + 'px';
+    document.querySelectorAll('.quad').forEach(q => q.classList.remove('drag-over'));
+    const el = document.elementFromPoint(t.clientX, t.clientY);
+    if (el) { const q = el.closest('.quad'); if (q) q.classList.add('drag-over'); }
+  }
+
+  async function onTouchEnd(e) {
+    const t = e.changedTouches[0];
+    if (touchClone) { touchClone.remove(); touchClone = null; }
+    document.querySelectorAll('.quad').forEach(q => q.classList.remove('drag-over'));
+    const el = document.elementFromPoint(t.clientX, t.clientY);
+    if (el && touchOrigin) {
+      const quad = el.closest('.quad');
+      if (quad) {
+        const newImp = quad.dataset.imp, newUrg = quad.dataset.urg;
+        if (touchOrigin.dataset.imp !== newImp || touchOrigin.dataset.urg !== newUrg) {
+          setSync('syncing', 'Saving');
+          try {
+            await col.doc(touchOrigin.dataset.doc).update({ imp: newImp, urg: newUrg });
+            setSync('synced', 'Synced');
+          } catch(err) { setSync('error', 'Error'); }
+        }
+      }
+    }
+    document.removeEventListener('touchmove', onTouchMove);
+    document.removeEventListener('touchend', onTouchEnd);
+    touchOrigin = null;
+  }
+
+  function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>
